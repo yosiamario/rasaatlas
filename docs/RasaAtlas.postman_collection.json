@@ -1,0 +1,316 @@
+{
+  "info": {
+    "_postman_id": "0f6f6b52-7f4f-4f31-9f2e-rasaatlas",
+    "name": "RasaAtlas API",
+    "description": "Koleksi uji REST API katalog kuliner Semarang. Jalankan backend di http://localhost:4000 lalu impor file ini ke Postman. Variabel token terisi otomatis setelah request Login berhasil.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4000" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Cek status server",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Berisi jumlah tempat', () => pm.expect(pm.response.json()).to.have.property('tempat'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Tempat",
+      "item": [
+        {
+          "name": "Daftar semua tempat",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tempat?limit=24",
+              "host": ["{{baseUrl}}"],
+              "path": ["tempat"],
+              "query": [{ "key": "limit", "value": "24" }]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Ada 24 tempat', () => pm.expect(pm.response.json().meta.total).to.eql(24));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Filter kategori + urut rating",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tempat?kategori=kafe&sort=rating",
+              "host": ["{{baseUrl}}"],
+              "path": ["tempat"],
+              "query": [
+                { "key": "kategori", "value": "kafe" },
+                { "key": "sort", "value": "rating" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Semua kategori kafe', () => pm.expect(pm.response.json().data.every(t => t.kategori_slug === 'kafe')).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pencarian kata kunci",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tempat?q=soto",
+              "host": ["{{baseUrl}}"],
+              "path": ["tempat"],
+              "query": [{ "key": "q", "value": "soto" }]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Menemukan soto', () => pm.expect(pm.response.json().meta.total).to.be.above(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Detail tempat (slug)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tempat/soto-bangkong",
+              "host": ["{{baseUrl}}"],
+              "path": ["tempat", "soto-bangkong"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Nama sesuai', () => pm.expect(pm.response.json().data.nama).to.eql('Soto Bangkong'));",
+                  "pm.test('Ada tempat terkait', () => pm.expect(pm.response.json().terkait).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Detail tempat (id)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/tempat/1", "host": ["{{baseUrl}}"], "path": ["tempat", "1"] }
+          }
+        },
+        {
+          "name": "Tempat tidak ditemukan (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tempat/tidak-ada",
+              "host": ["{{baseUrl}}"],
+              "path": ["tempat", "tidak-ada"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('Status 404', () => pm.response.to.have.status(404));"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Kategori",
+      "item": [
+        {
+          "name": "Daftar kategori",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/kategori", "host": ["{{baseUrl}}"], "path": ["kategori"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('4 kategori', () => pm.expect(pm.response.json().data.length).to.eql(4));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tempat dalam kategori (slug)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/kategori/tradisional/tempat",
+              "host": ["{{baseUrl}}"],
+              "path": ["kategori", "tradisional", "tempat"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('8 tempat tradisional', () => pm.expect(pm.response.json().meta.total).to.eql(8));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Detail kategori (id)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/kategori/2", "host": ["{{baseUrl}}"], "path": ["kategori", "2"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Daftar akun baru",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama\": \"Nama Mahasiswa\",\n  \"email\": \"mahasiswa@example.com\",\n  \"nim\": \"2141720001\",\n  \"password\": \"rahasia123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('token', pm.response.json().token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Masuk (akun demo)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@rasaatlas.id\",\n  \"password\": \"demo12345\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Ada token', () => pm.expect(pm.response.json()).to.have.property('token'));",
+                  "pm.collectionVariables.set('token', pm.response.json().token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Profil saya",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/auth/me", "host": ["{{baseUrl}}"], "path": ["auth", "me"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ubah profil",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama\": \"Demo RasaAtlas\",\n  \"nim\": \"0000000000\",\n  \"bio\": \"Pencari soto keliling Semarang.\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/me", "host": ["{{baseUrl}}"], "path": ["auth", "me"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('Status 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 450" role="img" aria-label="Ilustrasi tempat kuliner">
+  <rect width="600" height="450" fill="#efe5d4"/>
+  <circle cx="300" cy="210" r="150" fill="none" stroke="#143f33" stroke-opacity=".18" stroke-width="2" stroke-dasharray="6 12"/>
+  <path d="M180 250h240c0 56-54 98-120 98s-120-42-120-98Z" fill="#143f33" fill-opacity=".82"/>
+  <path d="M196 250h208" stroke="#c95b39" stroke-width="10" stroke-linecap="round"/>
+  <path d="M250 208c-12-18 3-28-4-44" fill="none" stroke="#143f33" stroke-opacity=".55" stroke-width="9" stroke-linecap="round"/>
+  <path d="M300 200c-12-18 3-28-4-44" fill="none" stroke="#143f33" stroke-opacity=".55" stroke-width="9" stroke-linecap="round"/>
+  <path d="M350 208c-12-18 3-28-4-44" fill="none" stroke="#143f33" stroke-opacity=".55" stroke-width="9" stroke-linecap="round"/>
+  <text x="300" y="400" text-anchor="middle" font-family="Georgia, serif" font-size="20" fill="#143f33" fill-opacity=".55">Foto belum tersedia</text>
+</svg>

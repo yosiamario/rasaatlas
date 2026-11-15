@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+# RasaAtlas - katalog kuliner Semarang (PWA)

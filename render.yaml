@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: rasaatlas-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 24.15.0
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        sync: false
+      - key: DB_PATH
+        value: ./data/rasaatlas.db
