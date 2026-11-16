@@ -22,9 +22,15 @@ export default function TempatCard({ tempat, priority = false }) {
           <span aria-hidden="true">{tempat.kategori_ikon || '🍽️'}</span>
           {tempat.kategori || 'Tidak diketahui'}
         </span>
-        <span className="rating-pill">
-          <Star aria-hidden="true" />
-          {formatRating(tempat.rating)}
+        <span className={`rating-pill${tempat.rating > 0 ? '' : ' baru'}`}>
+          {tempat.rating > 0 ? (
+            <>
+              <Star aria-hidden="true" />
+              {formatRating(tempat.rating)}
+            </>
+          ) : (
+            'Baru'
+          )}
         </span>
       </div>
 

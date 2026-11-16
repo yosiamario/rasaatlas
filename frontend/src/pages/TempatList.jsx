@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { ChevronDown, SlidersHorizontal } from 'lucide-react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { ChevronDown, Plus, SlidersHorizontal } from 'lucide-react'
 import { api } from '../lib/api'
 import { useApi } from '../hooks/useApi'
+import { useAuth } from '../context/AuthContext'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
 import TempatCard from '../components/TempatCard'
 import SearchField from '../components/SearchField'
@@ -18,6 +19,7 @@ const SORTS = [
 ]
 
 export default function TempatList() {
+  const { user } = useAuth()
   const [params, setParams] = useSearchParams()
   const q = params.get('q') || ''
   const kategori = params.get('kategori') || ''
@@ -62,14 +64,27 @@ export default function TempatList() {
   return (
     <div className="page">
       <div className="container">
-        <span className="eyebrow">Katalog lengkap</span>
-        <h1 className="display" style={{ fontSize: 'clamp(34px, 5vw, 52px)', margin: '10px 0 6px' }}>
-          Semua tempat
-        </h1>
-        <p className="lede" style={{ maxWidth: '62ch' }}>
-          Saring berdasarkan kategori, cari nama tempat, atau urutkan sesuai selera.
-          Semua data berasal dari satu API yang sama.
-        </p>
+        <div className="list-head">
+          <div>
+            <span className="eyebrow">Katalog lengkap</span>
+            <h1
+              className="display"
+              style={{ fontSize: 'clamp(34px, 5vw, 52px)', margin: '10px 0 6px' }}
+            >
+              Semua tempat
+            </h1>
+            <p className="lede" style={{ maxWidth: '62ch' }}>
+              Saring berdasarkan kategori, cari nama tempat, atau urutkan sesuai selera.
+              Semua data berasal dari satu API yang sama.
+            </p>
+          </div>
+
+          {user && (
+            <Link className="btn btn-accent" to="/tempat/tambah">
+              <Plus aria-hidden="true" /> Tambah tempat
+            </Link>
+          )}
+        </div>
 
         <div className="filter-bar" style={{ marginTop: 24 }}>
           <SearchField value={input} onChange={setInput} onSubmit={() => {}} />

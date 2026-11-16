@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft,
   ArrowUpRight,
   Check,
+  CheckCircle2,
   Clock,
   ExternalLink,
   MapPin,
   Navigation,
   Share2,
   Star,
+  UserRound,
   UtensilsCrossed,
   Wallet,
 } from 'lucide-react'
@@ -23,8 +25,10 @@ import LeafletMap from '../components/LeafletMap'
 export default function TempatDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [copied, setCopied] = useState(false)
 
+  const baru = searchParams.get('baru') === '1'
   const { data, loading, error, reload } = useApi(() => api.tempatDetail(id), [id])
   const tempat = data?.data
   const terkait = data?.terkait || []
@@ -110,6 +114,19 @@ export default function TempatDetail() {
           <ArrowLeft aria-hidden="true" /> Kembali
         </button>
 
+        {baru && (
+          <div className="success-banner" role="status">
+            <CheckCircle2 aria-hidden="true" />
+            <div>
+              <strong>Tempat berhasil ditambahkan!</strong>
+              <span>Terima kasih sudah memperkaya atlas kuliner Semarang.</span>
+            </div>
+            <Link className="btn btn-soft btn-sm" to="/tempat/tambah">
+              Tambah lagi
+            </Link>
+          </div>
+        )}
+
         <div className="detail-hero">
           <img src={fotoUrl(tempat.foto_url)} alt={`Ilustrasi hidangan di ${tempat.nama}`} />
           <div className="detail-hero-content">
@@ -117,12 +134,22 @@ export default function TempatDetail() {
               <span className="badge">
                 {tempat.kategori_ikon} {tempat.kategori}
               </span>
-              <span className="rating-inline">
-                <Star aria-hidden="true" />
-                {formatRating(tempat.rating)} / 5
-              </span>
+              {tempat.rating > 0 ? (
+                <span className="rating-inline">
+                  <Star aria-hidden="true" />
+                  {formatRating(tempat.rating)} / 5
+                </span>
+              ) : (
+                <span className="rating-inline">Baru · belum ada rating</span>
+              )}
             </div>
             <h1 className="display">{tempat.nama}</h1>
+            {tempat.sumber === 'pengguna' && (
+              <span className="detail-contributor">
+                <UserRound aria-hidden="true" />
+                Ditambahkan oleh {tempat.kontributor}
+              </span>
+            )}
           </div>
         </div>
 
@@ -169,8 +196,9 @@ export default function TempatDetail() {
             </div>
 
             <p className="muted" style={{ fontSize: 11.5 }}>
-              Foto adalah ilustrasi hidangan, bukan foto lokasi. Rating dan harga adalah data
-              kurasi untuk keperluan pembelajaran.
+              {tempat.sumber === 'pengguna'
+                ? `Tempat ini dikirim oleh ${tempat.kontributor}. Rating akan tersedia setelah dikurasi pengelola.`
+                : 'Foto adalah ilustrasi hidangan, bukan foto lokasi. Rating dan harga adalah data kurasi untuk keperluan pembelajaran.'}
             </p>
           </div>
 
@@ -201,7 +229,8 @@ export default function TempatDetail() {
                         <div>
                           <strong>{item.nama}</strong>
                           <span>
-                            ★ {formatRating(item.rating)} · {formatRupiah(item.harga)}
+                            ★ {item.rating > 0 ? formatRating(item.rating) : 'Baru'} ·{' '}
+                            {formatRupiah(item.harga)}
                           </span>
                         </div>
                       </Link>

@@ -7,6 +7,7 @@ import {
   ExternalLink,
   LogOut,
   Mail,
+  Plus,
   Save,
   Smartphone,
   UserRound,
@@ -98,6 +99,9 @@ export default function Profil() {
               <button type="button" className="btn btn-soft btn-sm" onClick={logout}>
                 <LogOut aria-hidden="true" /> Keluar
               </button>
+              <Link className="btn btn-accent btn-sm" to="/tempat/tambah">
+                <Plus aria-hidden="true" /> Tambah tempat
+              </Link>
               <Link className="btn btn-soft btn-sm" to="/tempat">
                 Jelajahi katalog
               </Link>
@@ -183,7 +187,7 @@ export default function Profil() {
                 </div>
                 <div className="info-row">
                   <span>Backend</span>
-                  <strong>Express + SQLite</strong>
+                  <strong>Express + Supabase PostgreSQL</strong>
                 </div>
                 <div className="info-row">
                   <span>Sumber data</span>

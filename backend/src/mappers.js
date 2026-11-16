@@ -1,7 +1,7 @@
 /**
- * Ubah baris SQLite menjadi objek JSON yang rapi untuk frontend.
- * Semua field opsional diberi nilai default "Tidak diketahui" agar UI
- * tidak pernah menampilkan undefined.
+ * Ubah baris PostgreSQL menjadi objek JSON yang rapi untuk frontend.
+ * Semua field opsional diberi nilai default agar UI tidak pernah menampilkan
+ * undefined.
  */
 export function mapTempat(row) {
   if (!row) return null
@@ -21,8 +21,12 @@ export function mapTempat(row) {
     lat: row.lat === null || row.lat === undefined ? null : Number(row.lat),
     lng: row.lng === null || row.lng === undefined ? null : Number(row.lng),
     jam_buka: row.jam_buka || 'Tidak diketahui',
-    populer: Boolean(row.populer),
+    populer: row.populer === true || row.populer === 1 || row.populer === '1',
     osm_id: row.osm_id || null,
+    sumber: row.sumber || 'kurasi',
+    dibuat_oleh: row.dibuat_oleh ?? null,
+    kontributor: row.sumber === 'pengguna' ? row.kontributor || 'Pengguna RasaAtlas' : null,
+    dibuat_pada: row.created_at ? new Date(row.created_at).toISOString() : null,
   }
 }
 
@@ -47,6 +51,6 @@ export function mapUser(row) {
     email: row.email,
     nim: row.nim || '',
     bio: row.bio || '',
-    dibuat_pada: row.created_at,
+    dibuat_pada: row.created_at ? new Date(row.created_at).toISOString() : null,
   }
 }

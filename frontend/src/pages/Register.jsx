@@ -14,7 +14,7 @@ export default function Register() {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
-  if (user) return <Navigate to="/profil" replace />
+  if (user) return <Navigate to={from} replace />
 
   const change = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
 

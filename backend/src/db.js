@@ -1,57 +1,68 @@
-import Database from 'better-sqlite3'
-import { mkdirSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
+import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import pg from 'pg'
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
-const defaultPath = resolve(__dirname, '../data/rasaatlas.db')
-const dbPath = process.env.DB_PATH ? resolve(process.cwd(), process.env.DB_PATH) : defaultPath
+const { Pool } = pg
 
-mkdirSync(dirname(dbPath), { recursive: true })
+const connectionString = (process.env.DATABASE_URL || '').trim()
+const schemaPath = fileURLToPath(new URL('../db/schema.sql', import.meta.url))
 
-export const db = new Database(dbPath)
-db.pragma('journal_mode = WAL')
-db.pragma('foreign_keys = ON')
+const isLocalHost = /(^|@)(localhost|127\.0\.0\.1)(:|\/|$)/.test(connectionString)
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS kategori (
-    id INTEGER PRIMARY KEY,
-    slug TEXT NOT NULL UNIQUE,
-    nama TEXT NOT NULL,
-    ikon TEXT NOT NULL DEFAULT '🍽️',
-    deskripsi TEXT NOT NULL DEFAULT ''
-  );
+/**
+ * Satu pool koneksi dipakai bersama seluruh route.
+ * Supabase mewajibkan TLS. Sertifikat pooler tidak selalu ada di trust store
+ * Node, jadi verifikasi rantai dimatikan (koneksi tetap terenkripsi).
+ */
+export const pool = new Pool({
+  connectionString: connectionString || undefined,
+  ssl: connectionString && !isLocalHost ? { rejectUnauthorized: false } : undefined,
+  max: Number(process.env.PG_POOL_MAX) || 10,
+  idleTimeoutMillis: 30_000,
+  connectionTimeoutMillis: 15_000,
+})
 
-  CREATE TABLE IF NOT EXISTS tempat (
-    id INTEGER PRIMARY KEY,
-    slug TEXT NOT NULL UNIQUE,
-    nama TEXT NOT NULL,
-    kategori_id INTEGER NOT NULL REFERENCES kategori(id),
-    alamat TEXT NOT NULL DEFAULT 'Tidak diketahui',
-    harga INTEGER NOT NULL DEFAULT 0,
-    rating REAL NOT NULL DEFAULT 0,
-    deskripsi TEXT NOT NULL DEFAULT 'Belum ada deskripsi.',
-    foto_url TEXT NOT NULL DEFAULT '',
-    lat REAL,
-    lng REAL,
-    jam_buka TEXT NOT NULL DEFAULT 'Tidak diketahui',
-    populer INTEGER NOT NULL DEFAULT 0,
-    osm_id TEXT,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-  );
+export function assertDatabaseConfig() {
+  if (!connectionString) {
+    throw new Error(
+      'DATABASE_URL belum diset. Salin connection string Supabase (Project Settings → Database → Connection string → URI) ke backend/.env.',
+    )
+  }
+}
 
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nama TEXT NOT NULL,
-    email TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
-    nim TEXT NOT NULL DEFAULT '',
-    bio TEXT NOT NULL DEFAULT '',
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-  );
+/** Jalankan satu query. Parameter selalu memakai placeholder $1, $2, ... */
+export function query(text, params) {
+  return pool.query(text, params)
+}
 
-  CREATE INDEX IF NOT EXISTS idx_tempat_kategori ON tempat (kategori_id);
-  CREATE INDEX IF NOT EXISTS idx_tempat_nama ON tempat (nama);
-`)
+let schemaReady = null
 
-export { dbPath }
+/** Buat tabel & indeks bila belum ada. Aman dipanggil berkali-kali. */
+export function ensureSchema() {
+  assertDatabaseConfig()
+  if (!schemaReady) {
+    schemaReady = pool
+      .query(readFileSync(schemaPath, 'utf8'))
+      .catch((error) => {
+        schemaReady = null
+        throw error
+      })
+  }
+  return schemaReady
+}
+
+/** Label aman untuk log (tanpa password). */
+export function databaseLabel() {
+  if (!connectionString) return 'DATABASE_URL belum diset'
+  try {
+    const url = new URL(connectionString)
+    const database = url.pathname.replace(/^\//, '') || 'postgres'
+    return `${url.hostname}/${database}`
+  } catch {
+    return 'Supabase'
+  }
+}
+
+export async function closePool() {
+  await pool.end()
+}

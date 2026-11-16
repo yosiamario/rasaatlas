@@ -1,60 +1,63 @@
 import { Router } from 'express'
-import { db } from '../db.js'
+import { query } from '../db.js'
 import { mapKategori, mapTempat } from '../mappers.js'
 
 const router = Router()
 
-const LIST_SQL = `
+const LIST_SELECT = `
   SELECT k.*,
-    (SELECT COUNT(*) FROM tempat t WHERE t.kategori_id = k.id) AS jumlah_tempat,
-    (SELECT t.foto_url FROM tempat t WHERE t.kategori_id = k.id ORDER BY t.populer DESC, t.rating DESC LIMIT 1) AS foto_sampel
+    (SELECT COUNT(*)::int FROM tempat t WHERE t.kategori_id = k.id) AS jumlah_tempat,
+    (SELECT t.foto_url FROM tempat t WHERE t.kategori_id = k.id
+      ORDER BY t.populer DESC, t.rating DESC LIMIT 1) AS foto_sampel
   FROM kategori k
-  ORDER BY k.id ASC
 `
 
 /** GET /kategori */
-router.get('/', (_req, res) => {
-  const rows = db.prepare(LIST_SQL).all()
+router.get('/', async (_req, res) => {
+  const { rows } = await query(`${LIST_SELECT} ORDER BY k.id ASC`)
   res.json({ data: rows.map(mapKategori) })
 })
 
 /** GET /kategori/:id/tempat — id angka atau slug. */
-router.get('/:id/tempat', (req, res) => {
+router.get('/:id/tempat', async (req, res) => {
   const key = String(req.params.id)
-  const kategori = /^\d+$/.test(key)
-    ? db.prepare('SELECT * FROM kategori WHERE id = ?').get(Number(key))
-    : db.prepare('SELECT * FROM kategori WHERE slug = ?').get(key)
+  const kategoriResult = /^\d+$/.test(key)
+    ? await query('SELECT * FROM kategori WHERE id = $1', [Number(key)])
+    : await query('SELECT * FROM kategori WHERE slug = $1', [key])
 
+  const kategori = kategoriResult.rows[0]
   if (!kategori) {
     return res.status(404).json({
       error: { message: 'Kategori tidak ditemukan.', code: 'NOT_FOUND' },
     })
   }
 
-  const rows = db
-    .prepare(
-      `SELECT t.*, k.nama AS kategori, k.slug AS kategori_slug, k.ikon AS kategori_ikon
-       FROM tempat t JOIN kategori k ON k.id = t.kategori_id
-       WHERE t.kategori_id = ?
-       ORDER BY t.populer DESC, t.rating DESC, t.nama ASC`,
-    )
-    .all(kategori.id)
+  const { rows } = await query(
+    `SELECT t.*, k.nama AS kategori, k.slug AS kategori_slug, k.ikon AS kategori_ikon,
+       u.nama AS kontributor
+     FROM tempat t
+     JOIN kategori k ON k.id = t.kategori_id
+     LEFT JOIN users u ON u.id = t.dibuat_oleh
+     WHERE t.kategori_id = $1
+     ORDER BY t.populer DESC, t.rating DESC, t.nama ASC`,
+    [kategori.id],
+  )
 
-  const count = rows.length
   res.json({
-    kategori: mapKategori({ ...kategori, jumlah_tempat: count }),
+    kategori: mapKategori({ ...kategori, jumlah_tempat: rows.length }),
     data: rows.map(mapTempat),
-    meta: { total: count },
+    meta: { total: rows.length },
   })
 })
 
 /** GET /kategori/:id — detail satu kategori (tanpa daftar tempat). */
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   const key = String(req.params.id)
-  const row = /^\d+$/.test(key)
-    ? db.prepare(`${LIST_SQL.replace('ORDER BY k.id ASC', 'WHERE k.id = ?')}`).get(Number(key))
-    : db.prepare(`${LIST_SQL.replace('ORDER BY k.id ASC', 'WHERE k.slug = ?')}`).get(key)
+  const result = /^\d+$/.test(key)
+    ? await query(`${LIST_SELECT} WHERE k.id = $1`, [Number(key)])
+    : await query(`${LIST_SELECT} WHERE k.slug = $1`, [key])
 
+  const row = result.rows[0]
   if (!row) {
     return res.status(404).json({
       error: { message: 'Kategori tidak ditemukan.', code: 'NOT_FOUND' },

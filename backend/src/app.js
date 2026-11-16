@@ -1,6 +1,6 @@
 import express from 'express'
 import cors from 'cors'
-import { db } from './db.js'
+import { ensureSchema, query } from './db.js'
 import { seedDatabase } from './seed.js'
 import tempatRouter from './routes/tempat.js'
 import kategoriRouter from './routes/kategori.js'
@@ -40,16 +40,16 @@ app.use((req, _res, next) => {
   next()
 })
 
-const countTempat = db.prepare('SELECT COUNT(*) AS n FROM tempat')
-
 app.get('/', (_req, res) => {
   res.json({
     name: 'RasaAtlas API',
     description: 'Katalog kuliner Semarang — REST API',
-    version: '1.0.0',
+    version: '1.1.0',
+    database: 'Supabase PostgreSQL',
     endpoints: [
       'GET /tempat',
       'GET /tempat/:id',
+      'POST /tempat (perlu login)',
       'GET /kategori',
       'GET /kategori/:id/tempat',
       'GET /kategori/:id',
@@ -62,10 +62,12 @@ app.get('/', (_req, res) => {
   })
 })
 
-app.get('/health', (_req, res) => {
+app.get('/health', async (_req, res) => {
+  const { rows } = await query('SELECT COUNT(*)::int AS n FROM tempat')
   res.json({
     status: 'ok',
-    tempat: countTempat.get().n,
+    database: 'supabase',
+    tempat: rows[0].n,
     uptime: Math.round(process.uptime()),
     timestamp: new Date().toISOString(),
   })
@@ -94,10 +96,17 @@ app.use((err, _req, res, _next) => {
   })
 })
 
-if (countTempat.get().n === 0) {
-  console.log('Database kosong → menjalankan seed otomatis...')
-  const result = seedDatabase()
-  console.log(`Seed otomatis: ${result.totalTempat} tempat, ${result.totalKategori} kategori.`)
+/** Siapkan skema lalu isi data awal bila database masih kosong. */
+export async function initializeDatabase() {
+  await ensureSchema()
+  const { rows } = await query('SELECT COUNT(*)::int AS n FROM tempat')
+  if (rows[0].n === 0) {
+    console.log('Database kosong — menjalankan seed otomatis...')
+    const result = await seedDatabase()
+    console.log(
+      `Seed otomatis: ${result.totalTempat} tempat, ${result.totalKategori} kategori.`,
+    )
+  }
 }
 
 export default app

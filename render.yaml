@@ -14,5 +14,7 @@ services:
         generateValue: true
       - key: CORS_ORIGIN
         sync: false
-      - key: DB_PATH
-        value: ./data/rasaatlas.db
+      - key: DATABASE_URL
+        sync: false
+      - key: PG_POOL_MAX
+        value: "10"

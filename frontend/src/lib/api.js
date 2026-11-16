@@ -101,6 +101,9 @@ export const api = {
   tempatDetail(id) {
     return request(`/tempat/${encodeURIComponent(id)}`)
   },
+  createTempat(data) {
+    return request('/tempat', { method: 'POST', body: data, auth: true })
+  },
   kategori() {
     return request('/kategori')
   },

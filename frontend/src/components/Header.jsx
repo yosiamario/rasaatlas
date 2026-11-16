@@ -1,5 +1,5 @@
 import { Link, NavLink } from 'react-router-dom'
-import { Compass, LogIn } from 'lucide-react'
+import { Compass, LogIn, PlusCircle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { inisial } from '../lib/format'
 
@@ -22,6 +22,13 @@ export default function Header() {
             <Compass aria-hidden="true" />
             <span>Jelajahi</span>
           </Link>
+
+          {user && (
+            <Link className="header-link" to="/tempat/tambah" title="Tambah tempat">
+              <PlusCircle aria-hidden="true" />
+              <span>Tambah</span>
+            </Link>
+          )}
 
           {!ready ? (
             <span className="header-user" aria-hidden="true">

@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "0f6f6b52-7f4f-4f31-9f2e-rasaatlas",
     "name": "RasaAtlas API",
-    "description": "Koleksi uji REST API katalog kuliner Semarang. Jalankan backend di http://localhost:4000 lalu impor file ini ke Postman. Variabel token terisi otomatis setelah request Login berhasil.",
+    "description": "Koleksi uji REST API katalog kuliner Semarang. Jalankan backend di http://localhost:4000 lalu impor file ini ke Postman. Jalankan request Login lebih dulu agar variabel token terisi otomatis; request Tambah tempat memakai token tersebut.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -107,6 +107,54 @@
                 "exec": [
                   "pm.test('Status 200', () => pm.response.to.have.status(200));",
                   "pm.test('Menemukan soto', () => pm.expect(pm.response.json().meta.total).to.be.above(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tambah tempat tanpa token (401)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama\": \"Warung Tanpa Token\",\n  \"kategori_id\": 1,\n  \"alamat\": \"Jl. Contoh No. 1, Semarang\",\n  \"harga\": 15000\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/tempat", "host": ["{{baseUrl}}"], "path": ["tempat"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('Status 401', () => pm.response.to.have.status(401));"]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tambah tempat (perlu login)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama\": \"Warung Uji Postman {{$timestamp}}\",\n  \"kategori_id\": 1,\n  \"alamat\": \"Jl. Pandanaran No. 12, Semarang Tengah\",\n  \"harga\": 15000,\n  \"jam_buka\": \"07.00-21.00\",\n  \"deskripsi\": \"Tempat uji dari koleksi Postman RasaAtlas.\",\n  \"lat\": -6.9836,\n  \"lng\": 110.4092\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/tempat", "host": ["{{baseUrl}}"], "path": ["tempat"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Sumber pengguna', () => pm.expect(pm.response.json().data.sumber).to.eql('pengguna'));",
+                  "pm.test('Rating awal 0', () => pm.expect(pm.response.json().data.rating).to.eql(0));",
+                  "pm.test('Punya slug', () => pm.expect(pm.response.json().data.slug).to.be.a('string'));"
                 ]
               }
             }

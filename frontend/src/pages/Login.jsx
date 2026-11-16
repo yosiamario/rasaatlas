@@ -15,7 +15,7 @@ export default function Login() {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
-  if (user) return <Navigate to="/profil" replace />
+  if (user) return <Navigate to={from} replace />
 
   const submit = async (e) => {
     e.preventDefault()

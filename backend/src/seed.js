@@ -1,95 +1,131 @@
 /**
- * Isi database dari data/seed.json.
+ * Isi database Supabase dari data/seed.json.
  * Jalankan: npm run seed (aman diulang) atau npm run seed:reset (hapus dulu).
  */
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import bcrypt from 'bcryptjs'
-import { db, dbPath } from './db.js'
+import { closePool, databaseLabel, ensureSchema, pool, query } from './db.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const seed = JSON.parse(readFileSync(join(__dirname, '../data/seed.json'), 'utf8'))
 
-const upsertKategori = db.prepare(`
-  INSERT INTO kategori (id, slug, nama, ikon, deskripsi)
-  VALUES (@id, @slug, @nama, @ikon, @deskripsi)
-  ON CONFLICT(id) DO UPDATE SET
-    slug = excluded.slug,
-    nama = excluded.nama,
-    ikon = excluded.ikon,
-    deskripsi = excluded.deskripsi
-`)
+export async function seedDatabase({ reset = false } = {}) {
+  await ensureSchema()
 
-const upsertTempat = db.prepare(`
-  INSERT INTO tempat
-    (id, slug, nama, kategori_id, alamat, harga, rating, deskripsi, foto_url, lat, lng, jam_buka, populer, osm_id)
-  VALUES
-    (@id, @slug, @nama, @kategori_id, @alamat, @harga, @rating, @deskripsi, @foto_url, @lat, @lng, @jam_buka, @populer, @osm_id)
-  ON CONFLICT(id) DO UPDATE SET
-    slug = excluded.slug,
-    nama = excluded.nama,
-    kategori_id = excluded.kategori_id,
-    alamat = excluded.alamat,
-    harga = excluded.harga,
-    rating = excluded.rating,
-    deskripsi = excluded.deskripsi,
-    foto_url = excluded.foto_url,
-    lat = excluded.lat,
-    lng = excluded.lng,
-    jam_buka = excluded.jam_buka,
-    populer = excluded.populer,
-    osm_id = excluded.osm_id
-`)
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
 
-const findUser = db.prepare('SELECT id FROM users WHERE email = ?')
-const insertUser = db.prepare(`
-  INSERT INTO users (nama, email, password_hash, nim, bio)
-  VALUES (@nama, @email, @password_hash, @nim, @bio)
-`)
+    if (reset) {
+      await client.query('TRUNCATE TABLE tempat, kategori, users RESTART IDENTITY CASCADE')
+    }
 
-export function seedDatabase({ reset = false } = {}) {
-  const run = db.transaction(() => {
-    if (reset) db.exec('DELETE FROM tempat; DELETE FROM kategori; DELETE FROM users;')
+    for (const k of seed.kategori) {
+      await client.query(
+        `INSERT INTO kategori (id, slug, nama, ikon, deskripsi)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (id) DO UPDATE SET
+           slug = EXCLUDED.slug,
+           nama = EXCLUDED.nama,
+           ikon = EXCLUDED.ikon,
+           deskripsi = EXCLUDED.deskripsi`,
+        [k.id, k.slug, k.nama, k.ikon, k.deskripsi],
+      )
+    }
 
-    for (const k of seed.kategori) upsertKategori.run(k)
     for (const t of seed.tempat) {
-      upsertTempat.run({
-        ...t,
-        alamat: t.alamat || 'Tidak diketahui',
-        deskripsi: t.deskripsi || 'Belum ada deskripsi.',
-        jam_buka: t.jam_buka || 'Tidak diketahui',
-        foto_url: t.foto_url || '',
-        populer: t.populer ? 1 : 0,
-        osm_id: t.osm_id || null,
-      })
+      await client.query(
+        `INSERT INTO tempat
+           (id, slug, nama, kategori_id, alamat, harga, rating, deskripsi, foto_url,
+            lat, lng, jam_buka, populer, osm_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+         ON CONFLICT (id) DO UPDATE SET
+           slug = EXCLUDED.slug,
+           nama = EXCLUDED.nama,
+           kategori_id = EXCLUDED.kategori_id,
+           alamat = EXCLUDED.alamat,
+           harga = EXCLUDED.harga,
+           rating = EXCLUDED.rating,
+           deskripsi = EXCLUDED.deskripsi,
+           foto_url = EXCLUDED.foto_url,
+           lat = EXCLUDED.lat,
+           lng = EXCLUDED.lng,
+           jam_buka = EXCLUDED.jam_buka,
+           populer = EXCLUDED.populer,
+           osm_id = EXCLUDED.osm_id`,
+        [
+          t.id,
+          t.slug,
+          t.nama,
+          t.kategori_id,
+          t.alamat || 'Tidak diketahui',
+          t.harga || 0,
+          t.rating || 0,
+          t.deskripsi || 'Belum ada deskripsi.',
+          t.foto_url || '',
+          t.lat ?? null,
+          t.lng ?? null,
+          t.jam_buka || 'Tidak diketahui',
+          Boolean(t.populer),
+          t.osm_id || null,
+        ],
+      )
     }
+
     for (const u of seed.users || []) {
-      if (findUser.get(u.email)) continue
-      insertUser.run({
-        nama: u.nama,
-        email: u.email,
-        password_hash: bcrypt.hashSync(u.password, 10),
-        nim: u.nim || '',
-        bio: u.bio || '',
-      })
+      await client.query(
+        `INSERT INTO users (nama, email, password_hash, nim, bio)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (email) DO NOTHING`,
+        [u.nama, u.email, bcrypt.hashSync(u.password, 10), u.nim || '', u.bio || ''],
+      )
     }
-  })
 
-  run()
+    // ID seed diisi eksplisit; samakan sequence agar tempat baru tidak bentrok.
+    await client.query(
+      `SELECT setval(
+         pg_get_serial_sequence('tempat', 'id'),
+         GREATEST(COALESCE((SELECT MAX(id) FROM tempat), 1), 1)
+       )`,
+    )
 
-  const totalTempat = db.prepare('SELECT COUNT(*) AS n FROM tempat').get().n
-  const totalKategori = db.prepare('SELECT COUNT(*) AS n FROM kategori').get().n
-  const totalUser = db.prepare('SELECT COUNT(*) AS n FROM users').get().n
-  return { totalTempat, totalKategori, totalUser }
+    await client.query('COMMIT')
+  } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
+  } finally {
+    client.release()
+  }
+
+  const { rows } = await query(
+    `SELECT
+       (SELECT COUNT(*)::int FROM tempat) AS tempat,
+       (SELECT COUNT(*)::int FROM kategori) AS kategori,
+       (SELECT COUNT(*)::int FROM users) AS pengguna`,
+  )
+
+  return {
+    totalTempat: rows[0].tempat,
+    totalKategori: rows[0].kategori,
+    totalUser: rows[0].pengguna,
+  }
 }
 
 const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href
 if (isMain) {
   const reset = process.argv.includes('--reset')
-  const result = seedDatabase({ reset })
-  console.log(`Seed selesai → ${dbPath}`)
-  console.log(
-    `  ${result.totalKategori} kategori, ${result.totalTempat} tempat, ${result.totalUser} pengguna`,
-  )
+  try {
+    const result = await seedDatabase({ reset })
+    console.log(`Seed selesai → ${databaseLabel()}`)
+    console.log(
+      `  ${result.totalKategori} kategori, ${result.totalTempat} tempat, ${result.totalUser} pengguna`,
+    )
+  } catch (error) {
+    console.error('Seed gagal:', error.message)
+    process.exitCode = 1
+  } finally {
+    await closePool()
+  }
 }

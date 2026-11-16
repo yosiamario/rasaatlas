@@ -1,7 +1,8 @@
 # Panduan Deploy RasaAtlas
 
-Tujuan: API Express + SQLite berjalan di **Render**, frontend React PWA di **Vercel**,
-keduanya HTTPS. Semua langkah bisa dilakukan lewat dashboard (tanpa CLI) atau CLI.
+Tujuan: API Express + database **Supabase PostgreSQL** berjalan di **Render**, frontend
+React PWA di **Vercel**, keduanya HTTPS. Semua langkah bisa dilakukan lewat dashboard
+(tanpa CLI) atau CLI.
 
 > Sudah disediakan `render.yaml` (root repo) dan `frontend/vercel.json`.
 > Deploy backend **lebih dulu** agar URL API sudah diketahui saat build frontend.
@@ -10,10 +11,13 @@ keduanya HTTPS. Semua langkah bisa dilakukan lewat dashboard (tanpa CLI) atau CL
 
 ## 0. Sebelum mulai
 
-1. Pastikan build lokal bersih:
+1. Siapkan project Supabase dan isi `DATABASE_URL` (lihat
+   **[docs/SUPABASE.md](SUPABASE.md)**). Pastikan build lokal bersih:
 
    ```bash
-   cd backend && npm install && npm run seed && npm start
+   cd backend && npm install
+   # isi DATABASE_URL di .env
+   npm start
    # terminal lain
    cd frontend && npm install && npm run build && npm run preview
    ```
@@ -29,11 +33,25 @@ keduanya HTTPS. Semua langkah bisa dilakukan lewat dashboard (tanpa CLI) atau CL
    git push -u origin main
    ```
 
-   Jangan commit `.env`, database `*.db`, atau `node_modules` (sudah ada `.gitignore`).
+   Jangan commit `.env`, file database, atau `node_modules` (sudah ada `.gitignore`).
 
 ---
 
-## 1. Deploy API ke Render
+## 1. Siapkan database Supabase
+
+Ikuti panduan lengkap di **[docs/SUPABASE.md](SUPABASE.md)**. Ringkasnya:
+
+1. Buat project di <https://supabase.com/dashboard>.
+2. Salin **connection string** (Project Settings → Database → Connection string → URI).
+   Untuk API Express ini, gunakan **Session pooler** (port `5432`).
+3. Simpan sebagai `DATABASE_URL` di `backend/.env` untuk lokal dan di environment
+   Render untuk produksi.
+4. Skema dan data awal dibuat otomatis saat server pertama kali start. Alternatif
+   manual: jalankan `backend/db/schema.sql` di SQL Editor lalu `npm run seed`.
+
+---
+
+## 2. Deploy API ke Render
 
 ### Opsi A — Blueprint (paling cepat)
 
@@ -42,9 +60,11 @@ keduanya HTTPS. Semua langkah bisa dilakukan lewat dashboard (tanpa CLI) atau CL
 3. Saat diminta, isi:
    - `JWT_SECRET` → biarkan **Generate** (atau isi string acak 32+ karakter).
    - `CORS_ORIGIN` → sementara isi `http://localhost:5173` (nanti diganti domain Vercel).
+   - `DATABASE_URL` → connection string Supabase (session pooler).
 4. **Apply** dan tunggu build selesai. Catat URL, mis.
    `https://rasaatlas-api.onrender.com`.
-5. Uji: `https://rasaatlas-api.onrender.com/health` → `{"status":"ok","tempat":24,...}`.
+5. Uji: `https://rasaatlas-api.onrender.com/health` →
+   `{"status":"ok","database":"supabase","tempat":24,...}`.
 
 ### Opsi B — Web Service manual
 
@@ -60,25 +80,23 @@ keduanya HTTPS. Semua langkah bisa dilakukan lewat dashboard (tanpa CLI) atau CL
 | `NODE_VERSION` | `24.15.0` |
 | `JWT_SECRET` | hasil `openssl rand -hex 32` (jangan dibagikan) |
 | `CORS_ORIGIN` | `http://localhost:5173` (ganti setelah frontend jadi) |
-| `DB_PATH` | `./data/rasaatlas.db` |
+| `DATABASE_URL` | connection string Supabase (session pooler) |
+| `PG_POOL_MAX` | `10` (opsional) |
 
-Saat pertama kali start, `app.js` mendeteksi database kosong dan otomatis menjalankan
-seed (4 kategori, 24 tempat, 1 akun demo).
+Saat pertama kali start, server membuat skema (bila belum ada), lalu mendeteksi tabel
+`tempat` kosong dan otomatis menjalankan seed (4 kategori, 24 tempat, 1 akun demo).
 
-### Catatan SQLite di Render free
+### Catatan database di Render
 
-- File sistem Render free bersifat **ephemeral**: restart/redeploy menghapus database.
-  Data seed otomatis dibuat ulang, tetapi akun pengguna yang didaftarkan akan hilang.
-- Untuk penyimpanan permanen:
-  1. Tambahkan **Disk** (berbayar) dengan mount path `/var/data`.
-  2. Set `DB_PATH=/var/data/rasaatlas.db`.
-  3. Redeploy. Database akan bertahan antar deploy.
-- Alternatif gratis jangka panjang: migrasi ke Postgres/Supabase (perlu menyesuaikan
-  `db.js`, `seed.js`, dan query di `routes/`).
+- Data berada di **Supabase**, bukan filesystem Render. Restart/redeploy tidak
+  menghapus akun maupun tempat kiriman pengguna.
+- Jangan menaruh `DATABASE_URL` di frontend/Vercel atau variabel `VITE_*`.
+- Supabase free tier bisa *pause* setelah lama tidak aktif. Buka dashboard Supabase
+  sebelum demo agar request pertama tidak lambat/gagal.
 
 ---
 
-## 2. Deploy frontend ke Vercel
+## 3. Deploy frontend ke Vercel
 
 ### Dashboard
 
@@ -114,7 +132,7 @@ vercel --prod
 
 ---
 
-## 3. Hubungkan keduanya (CORS)
+## 4. Hubungkan keduanya (CORS)
 
 1. Buka service API di Render → **Environment**.
 2. Ubah `CORS_ORIGIN` menjadi domain frontend, contoh:
@@ -138,7 +156,7 @@ curl -i -H "Origin: https://rasaatlas.vercel.app" \
 
 ---
 
-## 4. Verifikasi PWA
+## 5. Verifikasi PWA
 
 1. Buka situs HTTPS di Chrome/Edge.
 2. **DevTools → Application**:
@@ -164,7 +182,7 @@ curl -i -H "Origin: https://rasaatlas.vercel.app" \
 
 ---
 
-## 5. Alternatif platform
+## 6. Alternatif platform
 
 ### Netlify (frontend)
 
@@ -176,8 +194,9 @@ curl -i -H "Origin: https://rasaatlas.vercel.app" \
 
 ### Railway / Fly.io (backend)
 
-- Deploy folder `backend`, start `npm start`, set env yang sama seperti Render.
-- Railway mendukung volume permanen untuk SQLite.
+- Deploy folder `backend`, start `npm start`, set env yang sama seperti Render
+  (termasuk `DATABASE_URL`).
+- Tidak perlu volume permanen karena data ada di Supabase.
 
 ### GitHub Pages (frontend)
 
@@ -186,7 +205,7 @@ curl -i -H "Origin: https://rasaatlas.vercel.app" \
 
 ---
 
-## 6. Troubleshooting
+## 7. Troubleshooting
 
 | Gejala | Penyebab & solusi |
 | --- | --- |
@@ -196,17 +215,21 @@ curl -i -H "Origin: https://rasaatlas.vercel.app" \
 | API tidur lama (Render free) | Request pertama bisa 30–60 detik. Buka `/health` dulu sebelum demo. |
 | PWA tidak bisa di-install | Harus HTTPS, manifest valid, ikon 192/512, service worker aktif. Cek Application → Manifest. |
 | Ikon lama masih muncul | Unregister service worker (Application → Service Workers → Unregister) lalu hard reload. |
-| `better-sqlite3` gagal build | Pastikan Node 24 di server (`NODE_VERSION`) dan jalankan `npm install` bersih, bukan menyalin `node_modules`. |
-| Data pengguna hilang setelah deploy | Render free ephemeral. Tambahkan disk + `DB_PATH=/var/data/rasaatlas.db` atau migrasi DB. |
+| `DATABASE_URL belum diset` | Isi `backend/.env` lokal dan environment Render, lalu restart. Lihat `docs/SUPABASE.md`. |
+| `password authentication failed` | Password Supabase salah atau karakter khusus belum di-URL-encode. Salin ulang connection string. |
+| `ECONNREFUSED` / koneksi database timeout | Jaringan hanya IPv4 → gunakan host **pooler** (`aws-0-<region>.pooler.supabase.com`), bukan direct `db.*`. |
+| Tabel tidak ditemukan | Jalankan `backend/db/schema.sql` di SQL Editor Supabase, atau start server sekali. |
+| Data pengguna hilang setelah deploy | Cek `DATABASE_URL` sudah terpasang di Render (bukan memakai database lokal). Data seharusnya persisten di Supabase. |
 | Peta kosong | Tile OpenStreetMap butuh internet; saat offline peta menampilkan area abu-abu. Marker & tombol rute tetap tampil. |
 
 ---
 
-## 7. Checklist setelah deploy
+## 8. Checklist setelah deploy
 
-- [ ] `GET /health` API merespons `status: ok` dan `tempat: 24`.
+- [ ] `GET /health` API merespons `status: ok`, `database: "supabase"`, `tempat: 24`.
 - [ ] Frontend menampilkan 24 tempat (bukan error/offline).
 - [ ] Daftar akun baru → login → halaman Profil menampilkan nama & NIM.
+- [ ] Login → **Tambah tempat** → isi form + titik peta → tempat baru muncul dengan label **Baru** dan nama kontributor.
 - [ ] Refresh di `/tempat/soto-bangkong` tidak 404.
 - [ ] Manifest & service worker aktif, aplikasi bisa di-install.
 - [ ] Mode offline menampilkan halaman yang sudah dikunjungi.

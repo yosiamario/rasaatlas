@@ -1,12 +1,10 @@
 import { Router } from 'express'
 import bcrypt from 'bcryptjs'
-import { db } from '../db.js'
+import { query } from '../db.js'
 import { mapUser } from '../mappers.js'
 import { requireAuth, signToken } from '../middleware/auth.js'
 
 const router = Router()
-
-const findByEmail = db.prepare('SELECT * FROM users WHERE email = ?')
 
 // Pembatas percobaan sederhana (in-memory) supaya endpoint auth tidak dibruteforce.
 const attempts = new Map()
@@ -24,7 +22,7 @@ function tooManyAttempts(ip) {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-router.post('/register', (req, res) => {
+router.post('/register', async (req, res) => {
   if (tooManyAttempts(req.ip)) {
     return res.status(429).json({
       error: { message: 'Terlalu banyak percobaan. Coba lagi nanti.', code: 'RATE_LIMITED' },
@@ -56,21 +54,34 @@ router.post('/register', (req, res) => {
       error: { message: 'NIM maksimal 20 karakter.', code: 'VALIDATION' },
     })
   }
-  if (findByEmail.get(email)) {
+
+  const existing = await query('SELECT id FROM users WHERE email = $1', [email])
+  if (existing.rows[0]) {
     return res.status(409).json({
       error: { message: 'Email sudah terdaftar. Coba masuk saja.', code: 'EMAIL_TAKEN' },
     })
   }
 
-  const info = db
-    .prepare('INSERT INTO users (nama, email, password_hash, nim) VALUES (?, ?, ?, ?)')
-    .run(nama, email, bcrypt.hashSync(password, 10), nim)
-
-  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid)
-  res.status(201).json({ token: signToken(user), user: mapUser(user) })
+  try {
+    const { rows } = await query(
+      `INSERT INTO users (nama, email, password_hash, nim)
+       VALUES ($1, $2, $3, $4)
+       RETURNING *`,
+      [nama, email, bcrypt.hashSync(password, 10), nim],
+    )
+    return res.status(201).json({ token: signToken(rows[0]), user: mapUser(rows[0]) })
+  } catch (error) {
+    // Bisa terjadi bila dua permintaan mendaftar email yang sama bersamaan.
+    if (error.code === '23505') {
+      return res.status(409).json({
+        error: { message: 'Email sudah terdaftar. Coba masuk saja.', code: 'EMAIL_TAKEN' },
+      })
+    }
+    throw error
+  }
 })
 
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
   if (tooManyAttempts(req.ip)) {
     return res.status(429).json({
       error: { message: 'Terlalu banyak percobaan. Coba lagi nanti.', code: 'RATE_LIMITED' },
@@ -79,7 +90,9 @@ router.post('/login', (req, res) => {
 
   const email = String(req.body?.email || '').trim().toLowerCase()
   const password = String(req.body?.password || '')
-  const user = findByEmail.get(email)
+
+  const { rows } = await query('SELECT * FROM users WHERE email = $1', [email])
+  const user = rows[0]
 
   if (!user || !bcrypt.compareSync(password, user.password_hash)) {
     return res.status(401).json({
@@ -87,14 +100,14 @@ router.post('/login', (req, res) => {
     })
   }
 
-  res.json({ token: signToken(user), user: mapUser(user) })
+  return res.json({ token: signToken(user), user: mapUser(user) })
 })
 
 router.get('/me', requireAuth, (req, res) => {
   res.json({ user: mapUser(req.user) })
 })
 
-router.put('/me', requireAuth, (req, res) => {
+router.put('/me', requireAuth, async (req, res) => {
   const nama = String(req.body?.nama ?? req.user.nama).trim()
   const nim = String(req.body?.nim ?? req.user.nim).trim()
   const bio = String(req.body?.bio ?? req.user.bio).trim()
@@ -115,14 +128,13 @@ router.put('/me', requireAuth, (req, res) => {
     })
   }
 
-  db.prepare('UPDATE users SET nama = ?, nim = ?, bio = ? WHERE id = ?').run(
-    nama,
-    nim,
-    bio,
-    req.user.id,
+  const { rows } = await query(
+    `UPDATE users SET nama = $1, nim = $2, bio = $3
+     WHERE id = $4
+     RETURNING *`,
+    [nama, nim, bio, req.user.id],
   )
-  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id)
-  res.json({ user: mapUser(user) })
+  return res.json({ user: mapUser(rows[0]) })
 })
 
 export default router

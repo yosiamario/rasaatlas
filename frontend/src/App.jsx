@@ -7,6 +7,7 @@ import { useAuth } from './context/AuthContext'
 const Beranda = lazy(() => import('./pages/Beranda'))
 const TempatList = lazy(() => import('./pages/TempatList'))
 const TempatDetail = lazy(() => import('./pages/TempatDetail'))
+const TambahTempat = lazy(() => import('./pages/TambahTempat'))
 const KategoriList = lazy(() => import('./pages/KategoriList'))
 const KategoriDetail = lazy(() => import('./pages/KategoriDetail'))
 const Profil = lazy(() => import('./pages/Profil'))
@@ -49,6 +50,14 @@ export default function App() {
           <Route element={<Layout />}>
             <Route index element={<Beranda />} />
             <Route path="tempat" element={<TempatList />} />
+            <Route
+              path="tempat/tambah"
+              element={
+                <ProtectedRoute>
+                  <TambahTempat />
+                </ProtectedRoute>
+              }
+            />
             <Route path="tempat/:id" element={<TempatDetail />} />
             <Route path="kategori" element={<KategoriList />} />
             <Route path="kategori/:slug" element={<KategoriDetail />} />
