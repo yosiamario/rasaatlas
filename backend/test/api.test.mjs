@@ -200,11 +200,11 @@ describe('RasaAtlas API', { skip: !adaDatabase && 'DATABASE_URL belum diset' }, 
     assert.equal(detail.status, 200)
     assert.equal(detail.body.data.id, tempatId)
 
-    const cari = await panggil(`/tempat?q=${encodeURIComponent(akhiran)}`)
+    const cari = await panggil(`/tempat?q=${encodeURIComponent(akhiran)}`, { bearer: token })
     assert.equal(cari.status, 200)
     assert.ok(cari.body.data.some((item) => item.id === tempatId), 'tempat baru muncul di pencarian')
 
-    const daftarKontribusi = await panggil('/tempat?sort=terbaru&limit=5')
+    const daftarKontribusi = await panggil('/tempat?sort=terbaru&limit=5', { bearer: token })
     assert.ok(
       daftarKontribusi.body.data.some((item) => item.id === tempatId),
       'tempat baru muncul di urutan terbaru',

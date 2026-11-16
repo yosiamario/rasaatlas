@@ -157,14 +157,21 @@ router.get('/', optionalAuth, async (req, res) => {
   const values = []
 
   const push = (clause, value) => {
-    values.push(value)
-    where.push(clause.replaceAll('$P', `$${values.length}`))
+    if (value !== undefined) {
+      values.push(value)
+      where.push(clause.replaceAll('$P', `$${values.length}`))
+    } else {
+      where.push(clause)
+    }
   }
 
   // Filter status: Jika bukan permintaan admin yang meminta status tertentu, hanya tampilkan yang approved
+  // (atau kontribusi milik pengguna yang sedang login)
   const reqStatus = String(req.query.status || '').trim()
   if (reqStatus && req.user && req.user.role === 'admin') {
     if (reqStatus !== 'all') push('t.status = $P', reqStatus)
+  } else if (req.user) {
+    push("(t.status = 'approved' OR t.status IS NULL OR t.status = '' OR t.dibuat_oleh = $P)", req.user.id)
   } else {
     // Publik hanya melihat yang approved (atau yang kolom statusnya belum terisi / bawaan)
     push("(t.status = 'approved' OR t.status IS NULL OR t.status = '')")
