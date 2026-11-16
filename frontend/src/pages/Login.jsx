@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { AlertCircle, ArrowRight, KeyRound, LogIn } from 'lucide-react'
+import { AlertCircle, ArrowRight, LogIn } from 'lucide-react'
 import AuthShell from '../components/AuthShell'
 import { useAuth } from '../context/AuthContext'
 
@@ -33,12 +33,6 @@ export default function Login() {
     } finally {
       setBusy(false)
     }
-  }
-
-  const fillDemo = () => {
-    setEmail('demo@rasaatlas.id')
-    setPassword('demo12345')
-    setError('')
   }
 
   return (
@@ -94,18 +88,6 @@ export default function Login() {
           {busy ? 'Memeriksa akun…' : 'Masuk ke RasaAtlas'}
         </button>
       </form>
-
-      <div className="demo-box">
-        <span>
-          Akun demo
-          <br />
-          <code>demo@rasaatlas.id · demo12345</code>
-        </span>
-        <button type="button" onClick={fillDemo}>
-          <KeyRound aria-hidden="true" style={{ width: 13, height: 13, verticalAlign: '-2px' }} /> Isi
-          otomatis
-        </button>
-      </div>
 
       <p className="auth-switch">
         Belum punya akun?{' '}

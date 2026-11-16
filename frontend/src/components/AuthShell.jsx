@@ -11,8 +11,7 @@ export default function AuthShell({ image, eyebrow, headline, quote, children })
             <span className="eyebrow">{eyebrow}</span>
             <h2>{headline}</h2>
             <p>
-              Masuk untuk menyimpan identitasmu di halaman profil. Akun demo juga tersedia
-              kalau kamu hanya ingin melihat-lihat.
+              Masuk untuk menyimpan tempat favorit, menulis ulasan, dan berkontribusi menambahkan kuliner baru di Semarang.
             </p>
             <div className="quote">
               <Quote aria-hidden="true" />
