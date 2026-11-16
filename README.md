@@ -41,6 +41,10 @@ Semua tangkapan layar ada di [`docs/screenshots/`](docs/screenshots/) (desktop 1
 dan ponsel 390px), termasuk halaman detail, kategori, masuk, daftar, serta alur
 kontribusi tempat (`15`–`20`).
 
+**Logo:** siluet **Gereja Blenduk** Semarang (dua menara berkubah oranye) yang menyatu
+dengan **mangkuk beruap** sebagai simbol kuliner. Sumbernya `frontend/public/icon.svg`;
+ikon PWA, favicon, dan apple-touch-icon dibuat ulang dengan `npm run icons`.
+
 ---
 
 ## 🧱 Teknologi

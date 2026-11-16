@@ -1,12 +1,62 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="RasaAtlas">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="RasaAtlas — Blenduk dan semangkuk kuliner Semarang">
   <rect width="512" height="512" rx="112" fill="#143f33"/>
-  <circle cx="256" cy="256" r="196" fill="none" stroke="#f5ecdc" stroke-width="8" opacity="0.28"/>
-  <circle cx="256" cy="256" r="164" fill="none" stroke="#f5ecdc" stroke-width="2" opacity="0.18" stroke-dasharray="4 14"/>
-  <path d="M96 300h320c0 74-71 130-160 130S96 374 96 300Z" fill="#f5ecdc"/>
-  <path d="M112 300h288" stroke="#d4623d" stroke-width="14" stroke-linecap="round"/>
-  <path d="M190 238c-18-26 4-42-6-66" fill="none" stroke="#f5ecdc" stroke-width="13" stroke-linecap="round" opacity="0.9"/>
-  <path d="M256 226c-18-26 4-42-6-66" fill="none" stroke="#f5ecdc" stroke-width="13" stroke-linecap="round" opacity="0.9"/>
-  <path d="M322 238c-18-26 4-42-6-66" fill="none" stroke="#f5ecdc" stroke-width="13" stroke-linecap="round" opacity="0.9"/>
-  <path d="M256 118l26 44-26-12-26 12 26-44Z" fill="#e8a94b"/>
-  <circle cx="256" cy="366" r="15" fill="#143f33"/>
+  <circle cx="256" cy="256" r="196" fill="none" stroke="#f5ecdc" stroke-width="6" opacity="0.18"/>
+
+  <g transform="translate(0 -10)">
+    <!-- plinth -->
+    <rect x="104" y="394" width="304" height="16" rx="5" fill="#f5ecdc"/>
+
+    <!-- towers -->
+    <rect x="120" y="252" width="64" height="146" fill="#f5ecdc"/>
+    <rect x="328" y="252" width="64" height="146" fill="#f5ecdc"/>
+    <rect x="112" y="244" width="80" height="12" rx="3" fill="#f5ecdc"/>
+    <rect x="320" y="244" width="80" height="12" rx="3" fill="#f5ecdc"/>
+
+    <!-- belfries -->
+    <rect x="132" y="206" width="40" height="42" fill="#f5ecdc"/>
+    <rect x="340" y="206" width="40" height="42" fill="#f5ecdc"/>
+    <rect x="126" y="200" width="52" height="8" rx="2" fill="#f5ecdc"/>
+    <rect x="334" y="200" width="52" height="8" rx="2" fill="#f5ecdc"/>
+
+    <!-- domes -->
+    <path d="M126 202a26 26 0 0 1 52 0Z" fill="#d4623d"/>
+    <path d="M334 202a26 26 0 0 1 52 0Z" fill="#d4623d"/>
+
+    <!-- finials -->
+    <rect x="149" y="166" width="6" height="14" rx="3" fill="#f5ecdc"/>
+    <rect x="357" y="166" width="6" height="14" rx="3" fill="#f5ecdc"/>
+    <circle cx="152" cy="162" r="6" fill="#e8a94b"/>
+    <circle cx="360" cy="162" r="6" fill="#e8a94b"/>
+
+    <!-- nave + pediment -->
+    <rect x="184" y="292" width="144" height="106" fill="#f5ecdc"/>
+    <polygon points="180,296 256,240 332,296" fill="#f5ecdc"/>
+    <rect x="176" y="288" width="160" height="10" rx="3" fill="#f5ecdc"/>
+
+    <!-- tower windows -->
+    <path d="M140 356v-46a12 12 0 0 1 24 0v46Z" fill="#143f33"/>
+    <path d="M348 356v-46a12 12 0 0 1 24 0v46Z" fill="#143f33"/>
+    <rect x="146" y="266" width="12" height="22" rx="6" fill="#143f33"/>
+    <rect x="354" y="266" width="12" height="22" rx="6" fill="#143f33"/>
+
+    <!-- nave windows -->
+    <path d="M200 362v-24a8 8 0 0 1 16 0v24Z" fill="#143f33"/>
+    <path d="M296 362v-24a8 8 0 0 1 16 0v24Z" fill="#143f33"/>
+
+    <!-- central arch -->
+    <path d="M222 394v-48a34 34 0 0 1 68 0v48Z" fill="#143f33"/>
+
+    <!-- steam inside the arch -->
+    <g fill="none" stroke="#f5ecdc" stroke-width="9" stroke-linecap="round">
+      <path d="M230 352c-10-7 10-12 0-19s10-12 0-19"/>
+      <path d="M256 354c-11-8 11-13 0-21s11-13 0-21"/>
+      <path d="M282 352c-10-7 10-12 0-19s10-12 0-19"/>
+    </g>
+
+    <!-- bowl -->
+    <path d="M188 368h136a68 56 0 0 1-136 0Z" fill="#d4623d"/>
+    <rect x="238" y="418" width="36" height="18" rx="6" fill="#b64e2e"/>
+    <path d="M204 382a52 44 0 0 0 20 32" fill="none" stroke="#f5ecdc" stroke-width="8" stroke-linecap="round" opacity="0.35"/>
+    <line x1="180" y1="368" x2="332" y2="368" stroke="#e8a94b" stroke-width="12" stroke-linecap="round"/>
+  </g>
 </svg>
