@@ -39,8 +39,8 @@ export async function seedDatabase({ reset = false } = {}) {
       await client.query(
         `INSERT INTO tempat
            (id, slug, nama, kategori_id, alamat, harga, rating, deskripsi, foto_url,
-            lat, lng, jam_buka, populer, osm_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+            lat, lng, jam_buka, populer, osm_id, status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'approved')
          ON CONFLICT (id) DO UPDATE SET
            slug = EXCLUDED.slug,
            nama = EXCLUDED.nama,
@@ -54,7 +54,8 @@ export async function seedDatabase({ reset = false } = {}) {
            lng = EXCLUDED.lng,
            jam_buka = EXCLUDED.jam_buka,
            populer = EXCLUDED.populer,
-           osm_id = EXCLUDED.osm_id`,
+           osm_id = EXCLUDED.osm_id,
+           status = 'approved'`,
         [
           t.id,
           t.slug,
@@ -76,9 +77,9 @@ export async function seedDatabase({ reset = false } = {}) {
 
     for (const u of seed.users || []) {
       await client.query(
-        `INSERT INTO users (nama, email, password_hash, nim, bio)
-         VALUES ($1, $2, $3, $4, $5)
-         ON CONFLICT (email) DO NOTHING`,
+        `INSERT INTO users (nama, email, password_hash, nim, bio, role)
+         VALUES ($1, $2, $3, $4, $5, 'admin')
+         ON CONFLICT (email) DO UPDATE SET role = 'admin'`,
         [u.nama, u.email, bcrypt.hashSync(u.password, 10), u.nim || '', u.bio || ''],
       )
     }

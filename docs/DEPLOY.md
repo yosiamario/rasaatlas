@@ -46,8 +46,9 @@ Ikuti panduan lengkap di **[docs/SUPABASE.md](SUPABASE.md)**. Ringkasnya:
    Untuk API Express ini, gunakan **Session pooler** (port `5432`).
 3. Simpan sebagai `DATABASE_URL` di `backend/.env` untuk lokal dan di environment
    Render untuk produksi.
-4. Skema dan data awal dibuat otomatis saat server pertama kali start. Alternatif
-   manual: jalankan `backend/db/schema.sql` di SQL Editor lalu `npm run seed`.
+4. Skema dan data awal dibuat otomatis saat server pertama kali start (migrasi
+   dicatat di tabel `schema_migrations`). Alternatif manual: `npm run migrate`
+   lalu `npm run seed`, atau tempel `backend/db/schema.sql` di SQL Editor.
 
 ---
 
@@ -218,7 +219,7 @@ curl -i -H "Origin: https://rasaatlas.vercel.app" \
 | `DATABASE_URL belum diset` | Isi `backend/.env` lokal dan environment Render, lalu restart. Lihat `docs/SUPABASE.md`. |
 | `password authentication failed` | Password Supabase salah atau karakter khusus belum di-URL-encode. Salin ulang connection string. |
 | `ECONNREFUSED` / koneksi database timeout | Jaringan hanya IPv4 → gunakan host **pooler** (`aws-0-<region>.pooler.supabase.com`), bukan direct `db.*`. |
-| Tabel tidak ditemukan | Jalankan `backend/db/schema.sql` di SQL Editor Supabase, atau start server sekali. |
+| Tabel tidak ditemukan | Jalankan `npm run migrate` dari folder `backend`, atau start server sekali. |
 | Data pengguna hilang setelah deploy | Cek `DATABASE_URL` sudah terpasang di Render (bukan memakai database lokal). Data seharusnya persisten di Supabase. |
 | Peta kosong | Tile OpenStreetMap butuh internet; saat offline peta menampilkan area abu-abu. Marker & tombol rute tetap tampil. |
 

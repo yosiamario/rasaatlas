@@ -1,11 +1,16 @@
 import express from 'express'
 import cors from 'cors'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { ensureSchema, query } from './db.js'
 import { seedDatabase } from './seed.js'
 import tempatRouter from './routes/tempat.js'
 import kategoriRouter from './routes/kategori.js'
 import authRouter from './routes/auth.js'
+import favoritRouter from './routes/favorit.js'
+import uploadRouter, { UPLOADS_DIR } from './routes/upload.js'
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
 
 app.disable('x-powered-by')
@@ -31,7 +36,12 @@ app.use(
     },
   }),
 )
-app.use(express.json({ limit: '100kb' }))
+
+// Dukung upload base64 hingga 10MB
+app.use(express.json({ limit: '10mb' }))
+
+// Sajikan file statis folder uploads
+app.use('/uploads', express.static(UPLOADS_DIR))
 
 app.use((req, _res, next) => {
   if (req.path !== '/health') {
@@ -44,12 +54,23 @@ app.get('/', (_req, res) => {
   res.json({
     name: 'RasaAtlas API',
     description: 'Katalog kuliner Semarang — REST API',
-    version: '1.1.0',
+    version: '2.0.0',
     database: 'Supabase PostgreSQL',
     endpoints: [
       'GET /tempat',
       'GET /tempat/:id',
       'POST /tempat (perlu login)',
+      'PUT /tempat/:id (pemilik/admin)',
+      'DELETE /tempat/:id (pemilik/admin)',
+      'GET /tempat/saya (perlu login)',
+      'GET /tempat/moderasi (admin)',
+      'PATCH /tempat/:id/moderasi (admin)',
+      'GET /tempat/:id/ulasan',
+      'POST /tempat/:id/ulasan (perlu login)',
+      'GET /favorit (perlu login)',
+      'POST /favorit/:id (perlu login)',
+      'DELETE /favorit/:id (perlu login)',
+      'POST /upload (perlu login)',
       'GET /kategori',
       'GET /kategori/:id/tempat',
       'GET /kategori/:id',
@@ -57,6 +78,10 @@ app.get('/', (_req, res) => {
       'POST /auth/login',
       'GET /auth/me',
       'PUT /auth/me',
+      'PUT /auth/password',
+      'POST /auth/forgot-password',
+      'POST /auth/reset-password',
+      'DELETE /auth/me',
       'GET /health',
     ],
   })
@@ -76,6 +101,8 @@ app.get('/health', async (_req, res) => {
 app.use('/tempat', tempatRouter)
 app.use('/kategori', kategoriRouter)
 app.use('/auth', authRouter)
+app.use('/favorit', favoritRouter)
+app.use('/upload', uploadRouter)
 
 app.use((req, res) => {
   res.status(404).json({

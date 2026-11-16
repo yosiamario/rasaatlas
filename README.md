@@ -67,10 +67,14 @@ rasaatlas/
 ├── backend/                 API Express + Supabase PostgreSQL
 │   ├── data/seed.json       sumber data 24 tempat & 4 kategori
 │   ├── db/schema.sql        skema Supabase (tabel, indeks, RLS)
+│   ├── db/migrations/       migrasi incremental + pencatatan versi
+│   ├── test/                uji integrasi API (node:test)
+│   ├── scripts/migrate.mjs  CLI `npm run migrate`
 │   ├── src/
 │   │   ├── app.js           konfigurasi Express + CORS + error handler
 │   │   ├── index.js         entry point server (init DB → listen)
-│   │   ├── db.js            pool `pg`, query helper, migrasi skema
+│   │   ├── db.js            pool `pg`, query helper, pemanggil migrasi
+│   │   ├── migrate.js       runner migrasi (`schema_migrations`)
 │   │   ├── seed.js          impor data awal
 │   │   ├── mappers.js       normalisasi field (default "Tidak diketahui")
 │   │   ├── routes/          tempat.js, kategori.js, auth.js
@@ -112,7 +116,9 @@ cd backend
 npm install
 cp .env.example .env        # Windows: copy .env.example .env
 # isi DATABASE_URL di .env dengan connection string Supabase
-npm start                   # membuat skema + seed otomatis, lalu http://localhost:4000
+npm run migrate             # opsional — menerapkan skema & migrasi tanpa menjalankan server
+npm start                   # migrasi + seed otomatis, lalu http://localhost:4000
+npm test                    # uji integrasi API terhadap database di DATABASE_URL
 ```
 
 Ingin mengisi data secara manual?
@@ -266,6 +272,19 @@ npm run seed          # idempoten (upsert)
 npm run seed:reset    # hapus lalu isi ulang; akun pengguna juga dihapus
 ```
 
+### Migrasi
+
+`npm run migrate` (dan setiap `npm start`) menjalankan migrasi yang belum
+diterapkan, lalu mencatat versinya di tabel `schema_migrations`:
+
+| Versi | File | Isi |
+| --- | --- | --- |
+| `001_init` | `backend/db/schema.sql` | Tabel `users`, `kategori`, `tempat`, indeks, RLS |
+| berikutnya | `backend/db/migrations/NNN_*.sql` | Perubahan skema incremental |
+
+Menambah kolom/tabel baru cukup dengan file baru di `db/migrations/`, lihat
+[`backend/db/migrations/README.md`](backend/db/migrations/README.md).
+
 ---
 
 ## 🌐 Deploy
@@ -339,13 +358,51 @@ Skor dapat berbeda di akun Vercel karena header cache; lihat `docs/DEPLOY.md`.
 
 ---
 
+## 🧪 Pengujian
+
+### Uji integrasi API
+
+```bash
+cd backend
+npm test
+```
+
+`test/api.test.mjs` memakai `node:test` dan server HTTP di port acak. Seluruh
+permintaan diarahkan ke database pada `DATABASE_URL`; bila variabel itu kosong,
+pengujian dilewati.
+
+| Kelompok | Yang diuji |
+| --- | --- |
+| Migrasi | `schema_migrations` terisi dan migrasi kedua tidak menerapkan ulang |
+| Baca data | `/health`, list + `meta`, detail berdasarkan slug, 404 |
+| Auth | registrasi, email ganda (409), password salah (401), `PUT /auth/me` |
+| Tambah tempat | wajib login (401), validasi nama/koordinat/kategori (400), simpan 201 dengan `sumber=pengguna`, `dibuat_oleh`, `kontributor`, rating 0, muncul di pencarian & urutan terbaru, slug unik berakhiran `-2` |
+
+Data uji memakai email unik dan dihapus kembali di akhir, sehingga database
+tidak terisi sampah.
+
+### Uji manual UI
+
+| Skenario | Langkah | Hasil yang diharapkan |
+| --- | --- | --- |
+| Guard login | Buka `/tempat/tambah` tanpa masuk | Dialihkan ke `/masuk`, lalu kembali ke form |
+| Simpan tempat | Isi form, klik peta, **Simpan tempat** | Pindah ke detail dengan banner sukses dan label **Baru** |
+| Validasi | Kirim nama 1 karakter atau harga negatif | Pesan error di atas tombol simpan, data tidak tersimpan |
+| Kontributor | Buka detail tempat baru | “Ditambahkan oleh …” dan tombol tambah hanya untuk pengguna masuk |
+| Persistensi | Muat ulang detail setelah server restart | Tempat baru tetap ada (tersimpan di PostgreSQL) |
+
+Alur di atas juga terdokumentasi lewat screenshot `15`–`20` di
+[`docs/screenshots/`](docs/screenshots/).
+
+---
+
 ## ✅ Status pengerjaan
 
 | Tahap | Status |
 | --- | --- |
 | 1. Persiapan (judul, repo, tooling) | ✅ struktur repo siap; tinggal push ke GitHub |
 | 2. Data (Overpass, 24 tempat, CSV/JSON) | ✅ `scripts/raw-osm.json` + `backend/data/seed.json` |
-| 3. Backend (Express, Supabase, endpoint, CORS, deploy) | ✅ kode & uji lokal; deploy mengikuti `docs/DEPLOY.md` |
+| 3. Backend (Express, Supabase, endpoint, CORS, deploy) | ✅ kode + migrasi + 11 uji integrasi (`npm test`); deploy mengikuti `docs/DEPLOY.md` |
 | 4. Frontend PWA (React, router, 6 halaman, Leaflet) | ✅ termasuk login/daftar dan tambah tempat |
 | 5. Fitur PWA (manifest, service worker, HTTPS, Lighthouse) | ✅ siap; jalankan Lighthouse setelah deploy |
 | 6. Penyelesaian (profil, README, push, demo) | ✅ profil per akun + README; screenshot di `docs/screenshots/` |

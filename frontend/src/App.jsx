@@ -8,6 +8,11 @@ const Beranda = lazy(() => import('./pages/Beranda'))
 const TempatList = lazy(() => import('./pages/TempatList'))
 const TempatDetail = lazy(() => import('./pages/TempatDetail'))
 const TambahTempat = lazy(() => import('./pages/TambahTempat'))
+const EditTempat = lazy(() => import('./pages/EditTempat'))
+const KontribusiSaya = lazy(() => import('./pages/KontribusiSaya'))
+const ModerasiAdmin = lazy(() => import('./pages/ModerasiAdmin'))
+const FavoritList = lazy(() => import('./pages/FavoritList'))
+const LupaPassword = lazy(() => import('./pages/LupaPassword'))
 const KategoriList = lazy(() => import('./pages/KategoriList'))
 const KategoriDetail = lazy(() => import('./pages/KategoriDetail'))
 const Profil = lazy(() => import('./pages/Profil'))
@@ -24,7 +29,7 @@ function PageLoader() {
   )
 }
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children, requireAdmin = false }) {
   const { user, ready } = useAuth()
   const location = useLocation()
 
@@ -37,6 +42,9 @@ function ProtectedRoute({ children }) {
         state={{ from: `${location.pathname}${location.search}` }}
       />
     )
+  }
+  if (requireAdmin && user.role !== 'admin') {
+    return <Navigate to="/" replace />
   }
   return children
 }
@@ -58,7 +66,32 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="tempat/:id/edit"
+              element={
+                <ProtectedRoute>
+                  <EditTempat />
+                </ProtectedRoute>
+              }
+            />
             <Route path="tempat/:id" element={<TempatDetail />} />
+            <Route
+              path="kontribusi-saya"
+              element={
+                <ProtectedRoute>
+                  <KontribusiSaya />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="admin/moderasi"
+              element={
+                <ProtectedRoute requireAdmin>
+                  <ModerasiAdmin />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="favorit" element={<FavoritList />} />
             <Route path="kategori" element={<KategoriList />} />
             <Route path="kategori/:slug" element={<KategoriDetail />} />
             <Route
@@ -71,6 +104,7 @@ export default function App() {
             />
             <Route path="masuk" element={<Login />} />
             <Route path="daftar" element={<Register />} />
+            <Route path="lupa-password" element={<LupaPassword />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>

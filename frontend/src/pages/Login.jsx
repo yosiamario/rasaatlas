@@ -66,7 +66,12 @@ export default function Login() {
         </div>
 
         <div className="field">
-          <label htmlFor="login-password">Password</label>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <label htmlFor="login-password">Password</label>
+            <Link to="/lupa-password" style={{ fontSize: 12, color: 'var(--terracotta)', fontWeight: 600 }}>
+              Lupa password?
+            </Link>
+          </div>
           <input
             id="login-password"
             type="password"

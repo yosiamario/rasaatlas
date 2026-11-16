@@ -64,9 +64,17 @@ npm start
 
 Saat start, server:
 
-1. menjalankan `backend/db/schema.sql` (idempoten),
+1. menjalankan migrasi yang belum diterapkan (`schema.sql` sebagai `001_init`,
+   lalu file di `db/migrations/`) dan mencatatnya di tabel `schema_migrations`,
 2. mengecek tabel `tempat`,
 3. mengisi 4 kategori, 24 tempat, dan akun demo bila masih kosong.
+
+Ingin menyiapkan skema tanpa menyalakan server?
+
+```bash
+npm run migrate   # terapkan skema/migrasi saja
+npm test          # uji integrasi API terhadap database ini
+```
 
 Health check: <http://localhost:4000/health> →
 `{"status":"ok","database":"supabase","tempat":24,...}`.

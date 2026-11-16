@@ -1,11 +1,9 @@
-import { readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
 import pg from 'pg'
+import { applyMigrations } from './migrate.js'
 
 const { Pool } = pg
 
 const connectionString = (process.env.DATABASE_URL || '').trim()
-const schemaPath = fileURLToPath(new URL('../db/schema.sql', import.meta.url))
 
 const isLocalHost = /(^|@)(localhost|127\.0\.0\.1)(:|\/|$)/.test(connectionString)
 
@@ -37,12 +35,21 @@ export function query(text, params) {
 
 let schemaReady = null
 
-/** Buat tabel & indeks bila belum ada. Aman dipanggil berkali-kali. */
+/**
+ * Jalankan migrasi database yang belum diterapkan.
+ * Aman dipanggil berkali-kali: versi yang sudah tercatat di `schema_migrations`
+ * akan dilewati.
+ */
 export function ensureSchema() {
   assertDatabaseConfig()
   if (!schemaReady) {
-    schemaReady = pool
-      .query(readFileSync(schemaPath, 'utf8'))
+    schemaReady = applyMigrations((text, params) => pool.query(text, params))
+      .then(({ applied }) => {
+        if (applied.length) {
+          console.log(`[db] migrasi diterapkan: ${applied.join(', ')}`)
+        }
+        return true
+      })
       .catch((error) => {
         schemaReady = null
         throw error

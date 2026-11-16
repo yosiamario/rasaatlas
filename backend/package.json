@@ -11,6 +11,8 @@
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
+    "migrate": "node scripts/migrate.mjs",
+    "test": "node --test test/api.test.mjs",
     "seed": "node src/seed.js",
     "seed:reset": "node src/seed.js --reset"
   },

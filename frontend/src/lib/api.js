@@ -95,21 +95,79 @@ const qs = (params = {}) => {
 }
 
 export const api = {
+  // Tempat
   tempat(params) {
-    return request(`/tempat${qs(params)}`)
+    return request(`/tempat${qs(params)}`, { auth: true })
   },
   tempatDetail(id) {
-    return request(`/tempat/${encodeURIComponent(id)}`)
+    return request(`/tempat/${encodeURIComponent(id)}`, { auth: true })
   },
   createTempat(data) {
     return request('/tempat', { method: 'POST', body: data, auth: true })
   },
+  updateTempat(id, data) {
+    return request(`/tempat/${encodeURIComponent(id)}`, { method: 'PUT', body: data, auth: true })
+  },
+  deleteTempat(id) {
+    return request(`/tempat/${encodeURIComponent(id)}`, { method: 'DELETE', auth: true })
+  },
+  tempatSaya() {
+    return request('/tempat/saya', { auth: true })
+  },
+  tempatModerasi(params) {
+    return request(`/tempat/moderasi${qs(params)}`, { auth: true })
+  },
+  updateModerasi(id, data) {
+    return request(`/tempat/${encodeURIComponent(id)}/moderasi`, {
+      method: 'PATCH',
+      body: data,
+      auth: true,
+    })
+  },
+
+  // Ulasan
+  ulasan(tempatId) {
+    return request(`/tempat/${encodeURIComponent(tempatId)}/ulasan`)
+  },
+  createUlasan(tempatId, data) {
+    return request(`/tempat/${encodeURIComponent(tempatId)}/ulasan`, {
+      method: 'POST',
+      body: data,
+      auth: true,
+    })
+  },
+  deleteUlasan(tempatId, ulasanId) {
+    return request(
+      `/tempat/${encodeURIComponent(tempatId)}/ulasan/${encodeURIComponent(ulasanId)}`,
+      { method: 'DELETE', auth: true },
+    )
+  },
+
+  // Favorit
+  favorit() {
+    return request('/favorit', { auth: true })
+  },
+  addFavorit(tempatId) {
+    return request(`/favorit/${encodeURIComponent(tempatId)}`, { method: 'POST', auth: true })
+  },
+  removeFavorit(tempatId) {
+    return request(`/favorit/${encodeURIComponent(tempatId)}`, { method: 'DELETE', auth: true })
+  },
+
+  // Upload
+  uploadFoto(dataUrl) {
+    return request('/upload', { method: 'POST', body: { data: dataUrl }, auth: true })
+  },
+
+  // Kategori
   kategori() {
     return request('/kategori')
   },
   kategoriDetail(id) {
     return request(`/kategori/${encodeURIComponent(id)}/tempat`)
   },
+
+  // Auth & Akun
   login(credentials) {
     return request('/auth/login', { method: 'POST', body: credentials })
   },
@@ -122,13 +180,35 @@ export const api = {
   updateMe(data) {
     return request('/auth/me', { method: 'PUT', body: data, auth: true })
   },
+  changePassword(data) {
+    return request('/auth/password', { method: 'PUT', body: data, auth: true })
+  },
+  forgotPassword(email) {
+    return request('/auth/forgot-password', { method: 'POST', body: { email } })
+  },
+  resetPassword(data) {
+    return request('/auth/reset-password', { method: 'POST', body: data })
+  },
+  verifyEmail() {
+    return request('/auth/verify-email', { method: 'POST', auth: true })
+  },
+  deleteAccount(password) {
+    return request('/auth/me', { method: 'DELETE', body: { password }, auth: true })
+  },
+
   health() {
     return request('/health')
   },
 }
 
-/** Gambar dari API berupa path publik frontend; biarkan apa adanya. */
+/** Gambar dari API berupa path publik frontend atau path upload server */
 export function fotoUrl(path) {
   if (!path) return '/images/placeholder.svg'
+  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) {
+    return path
+  }
+  if (path.startsWith('/uploads/')) {
+    return `${API_BASE}${path}`
+  }
   return path
 }
