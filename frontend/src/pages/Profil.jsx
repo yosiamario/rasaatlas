@@ -22,7 +22,6 @@ import {
   Sun,
   Trash2,
   UserCheck,
-  UserRound,
   UtensilsCrossed,
 } from 'lucide-react'
 import { api, fotoUrl } from '../lib/api'
@@ -43,7 +42,7 @@ export default function Profil() {
   const { canInstall, installed, isIOS, promptInstall } = useInstallPrompt()
 
   // Form profil
-  const [form, setForm] = useState({ nama: '', nim: '', bio: '', avatar_url: '' })
+  const [form, setForm] = useState({ nama: '', bio: '', avatar_url: '' })
   const [saving, setSaving] = useState(false)
   const [feedback, setFeedback] = useState('')
   const [error, setError] = useState('')
@@ -68,7 +67,6 @@ export default function Profil() {
     if (user) {
       setForm({
         nama: user.nama || '',
-        nim: user.nim || '',
         bio: user.bio || '',
         avatar_url: user.avatar_url || '',
       })
@@ -86,15 +84,10 @@ export default function Profil() {
       setError('Nama minimal 2 karakter.')
       return
     }
-    if (form.nim.trim().length > 20) {
-      setError('NIM maksimal 20 karakter.')
-      return
-    }
     setSaving(true)
     try {
       await updateProfile({
         nama: form.nama.trim(),
-        nim: form.nim.trim(),
         bio: form.bio.trim(),
         avatar_url: form.avatar_url.trim(),
       })
@@ -221,10 +214,6 @@ export default function Profil() {
 
               <div className="profile-meta">
                 <span className="badge">
-                  <UserRound aria-hidden="true" style={{ width: 13, height: 13 }} />
-                  NIM {user.nim || 'belum diisi'}
-                </span>
-                <span className="badge">
                   <BookOpen aria-hidden="true" style={{ width: 13, height: 13 }} />
                   {MATA_KULIAH}
                 </span>
@@ -281,7 +270,7 @@ export default function Profil() {
             {/* Panel 1: Data Mahasiswa & Avatar */}
             <section className="panel" aria-labelledby="edit-profil">
               <h2 id="edit-profil">Informasi Akun & Avatar</h2>
-              <p>Perbarui nama, NIM, foto profil, dan bio kamu.</p>
+              <p>Perbarui nama, foto profil, dan bio kamu.</p>
 
               <form className="form" onSubmit={submitProfil}>
                 <div className="field">
@@ -302,18 +291,6 @@ export default function Profil() {
                     onChange={(e) => setForm((f) => ({ ...f, nama: e.target.value }))}
                     autoComplete="name"
                     required
-                  />
-                </div>
-
-                <div className="field">
-                  <label htmlFor="profil-nim">NIM</label>
-                  <input
-                    id="profil-nim"
-                    type="text"
-                    value={form.nim}
-                    onChange={(e) => setForm((f) => ({ ...f, nim: e.target.value }))}
-                    inputMode="numeric"
-                    placeholder="Contoh: 2141720001"
                   />
                 </div>
 

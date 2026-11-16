@@ -10,7 +10,7 @@ export default function Register() {
   const location = useLocation()
   const from = location.state?.from || '/profil'
 
-  const [form, setForm] = useState({ nama: '', email: '', nim: '', password: '', konfirmasi: '' })
+  const [form, setForm] = useState({ nama: '', email: '', password: '', konfirmasi: '' })
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -44,7 +44,6 @@ export default function Register() {
       await register({
         nama: form.nama.trim(),
         email: form.email.trim(),
-        nim: form.nim.trim(),
         password: form.password,
       })
       navigate(from, { replace: true })
@@ -60,7 +59,7 @@ export default function Register() {
       image="/images/tempat/latte-art.jpg"
       eyebrow="Bergabung dengan RasaAtlas"
       headline="Simpan identitasmu di atlas."
-      quote="“Nama, NIM, dan catatan kecilmu akan muncul di halaman profil.”"
+      quote="“Nama dan catatan kecilmu akan muncul di halaman profil.”"
     >
       <h1>Buat akun</h1>
       <p>Cukup satu menit, tanpa verifikasi email.</p>
@@ -74,23 +73,9 @@ export default function Register() {
             value={form.nama}
             onChange={change('nama')}
             autoComplete="name"
-            placeholder="Nama sesuai KTM"
+            placeholder="Nama"
             required
           />
-        </div>
-
-        <div className="field">
-          <label htmlFor="reg-nim">NIM</label>
-          <input
-            id="reg-nim"
-            type="text"
-            value={form.nim}
-            onChange={change('nim')}
-            inputMode="numeric"
-            placeholder="2141720001"
-            maxLength={20}
-          />
-          <span className="hint">Opsional — bisa diisi nanti di halaman profil.</span>
         </div>
 
         <div className="field">
