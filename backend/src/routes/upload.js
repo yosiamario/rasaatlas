@@ -2,11 +2,17 @@ import { Router } from 'express'
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
+import os from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { requireAuth } from '../middleware/auth.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-export const UPLOADS_DIR = path.join(__dirname, '../../public/uploads')
+
+// Di Vercel serverless, hanya /tmp yang bisa ditulis; di server biasa gunakan public/uploads
+const IS_VERCEL = !!process.env.VERCEL
+export const UPLOADS_DIR = IS_VERCEL
+  ? path.join(os.tmpdir(), 'uploads')
+  : path.join(__dirname, '../../public/uploads')
 
 if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true })

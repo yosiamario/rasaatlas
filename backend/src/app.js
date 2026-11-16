@@ -29,6 +29,8 @@ app.use(
     origin(origin, callback) {
       // Postman/curl tidak mengirim Origin.
       if (!origin) return callback(null, true)
+      // Vercel serverless: frontend & API di domain yang sama
+      if (process.env.VERCEL) return callback(null, true)
       if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
         return callback(null, true)
       }
@@ -55,7 +57,7 @@ app.get('/', (_req, res) => {
     name: 'RasaAtlas API',
     description: 'Katalog kuliner Semarang — REST API',
     version: '2.0.0',
-    database: 'Supabase PostgreSQL',
+    database: 'Neon PostgreSQL',
     endpoints: [
       'GET /tempat',
       'GET /tempat/:id',
@@ -91,7 +93,7 @@ app.get('/health', async (_req, res) => {
   const { rows } = await query('SELECT COUNT(*)::int AS n FROM tempat')
   res.json({
     status: 'ok',
-    database: 'supabase',
+    database: 'neon',
     tempat: rows[0].n,
     uptime: Math.round(process.uptime()),
     timestamp: new Date().toISOString(),
