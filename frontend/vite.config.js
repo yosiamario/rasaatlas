@@ -8,9 +8,9 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: [
-        'favicon-32x32.png',
-        'apple-touch-icon.png',
-        'icon.svg',
+        'icons/favicon-32.png',
+        'icons/apple-touch-icon.png',
+        'icons/logo.svg',
         'fonts/*.woff2',
       ],
       manifest: {
@@ -28,10 +28,10 @@ export default defineConfig({
         theme_color: '#143f33',
         categories: ['food', 'travel', 'lifestyle'],
         icons: [
-          { src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/pwa-512x512.png', sizes: '512x512', type: 'image/png' },
+          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
           {
-            src: '/maskable-512x512.png',
+            src: '/icons/maskable-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',

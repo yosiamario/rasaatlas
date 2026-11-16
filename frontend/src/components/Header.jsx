@@ -10,7 +10,7 @@ export default function Header() {
     <header className="site-header">
       <div className="container">
         <Link className="brand" to="/">
-          <img src="/icon.svg" alt="" width="40" height="40" />
+          <img src="/icons/logo.svg" alt="" width="40" height="40" />
           <span className="brand-text">
             <span className="brand-name">RasaAtlas</span>
             <span className="brand-sub">Kuliner Semarang</span>
