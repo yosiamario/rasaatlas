@@ -52,7 +52,7 @@ app.use((req, _res, next) => {
   next()
 })
 
-app.get('/', (_req, res) => {
+app.get(['/', '/api'], (_req, res) => {
   res.json({
     name: 'RasaAtlas API',
     description: 'Katalog kuliner Semarang — REST API',
@@ -89,7 +89,7 @@ app.get('/', (_req, res) => {
   })
 })
 
-app.get('/health', async (_req, res) => {
+app.get(['/health', '/api/health'], async (_req, res) => {
   const { rows } = await query('SELECT COUNT(*)::int AS n FROM tempat')
   res.json({
     status: 'ok',
@@ -100,11 +100,11 @@ app.get('/health', async (_req, res) => {
   })
 })
 
-app.use('/tempat', tempatRouter)
-app.use('/kategori', kategoriRouter)
-app.use('/auth', authRouter)
-app.use('/favorit', favoritRouter)
-app.use('/upload', uploadRouter)
+app.use(['/tempat', '/api/tempat'], tempatRouter)
+app.use(['/kategori', '/api/kategori'], kategoriRouter)
+app.use(['/auth', '/api/auth'], authRouter)
+app.use(['/favorit', '/api/favorit'], favoritRouter)
+app.use(['/upload', '/api/upload'], uploadRouter)
 
 app.use((req, res) => {
   res.status(404).json({
