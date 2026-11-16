@@ -23,7 +23,7 @@ export default function Header() {
 
   return (
     <header className="site-header">
-      <div className="container">
+      <div className="container header-container">
         <Link className="brand" to="/">
           <img src="/icons/logo.svg" alt="" width="40" height="40" />
           <span className="brand-text">
@@ -32,7 +32,8 @@ export default function Header() {
           </span>
         </Link>
 
-        <div className="header-actions">
+        {/* Menu Navigasi Desktop — di HP sudah tersedia di BottomNav */}
+        <nav className="header-nav-desktop" aria-label="Navigasi Header">
           <Link className="header-link" to="/tempat">
             <Compass aria-hidden="true" />
             <span>{t('nav_tempat', 'Jelajahi')}</span>
@@ -40,27 +41,29 @@ export default function Header() {
 
           <Link className="header-link" to="/favorit" title={t('nav_favorit', 'Favorit')}>
             <Heart aria-hidden="true" />
-            <span className="desktop-only">{t('nav_favorit', 'Favorit')}</span>
+            <span>{t('nav_favorit', 'Favorit')}</span>
           </Link>
 
           {user && (
             <Link className="header-link" to="/tempat/tambah" title={t('nav_tambah', 'Tambah')}>
               <PlusCircle aria-hidden="true" />
-              <span className="desktop-only">{t('nav_tambah', 'Tambah')}</span>
+              <span>{t('nav_tambah', 'Tambah')}</span>
             </Link>
           )}
 
           {user?.role === 'admin' && (
             <Link className="header-link admin-pill" to="/admin/moderasi" title="Moderasi Admin">
               <ShieldCheck aria-hidden="true" />
-              <span className="desktop-only">Moderasi</span>
+              <span>Moderasi</span>
             </Link>
           )}
+        </nav>
 
+        <div className="header-actions">
           {/* Toggle Bahasa */}
           <button
             type="button"
-            className="icon-btn-ghost"
+            className="icon-btn-ghost lang-btn"
             onClick={toggleLang}
             title={lang === 'id' ? 'Ganti ke Bahasa Inggris' : 'Switch to Indonesian'}
             aria-label="Ganti bahasa"
@@ -72,7 +75,7 @@ export default function Header() {
           {/* Toggle Dark Mode */}
           <button
             type="button"
-            className="icon-btn-ghost"
+            className="icon-btn-ghost theme-btn"
             onClick={toggleTheme}
             title={isDark ? 'Beralih ke mode terang' : 'Beralih ke mode gelap'}
             aria-label="Toggle tema gelap"
@@ -101,7 +104,7 @@ export default function Header() {
               <span className="user-name">{user.nama.split(' ')[0]}</span>
             </Link>
           ) : (
-            <Link className="header-link" to="/masuk">
+            <Link className="header-link header-login-link" to="/masuk">
               <LogIn aria-hidden="true" />
               <span>{t('nav_masuk', 'Masuk')}</span>
             </Link>

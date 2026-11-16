@@ -7,7 +7,7 @@ export default function BottomNav() {
 
   const items = [
     { to: '/', label: t('nav_beranda', 'Beranda'), icon: Home, end: true },
-    { to: '/tempat', label: t('nav_tempat', 'Tempat'), icon: UtensilsCrossed },
+    { to: '/tempat', label: t('nav_tempat', 'Jelajahi'), icon: UtensilsCrossed },
     { to: '/favorit', label: t('nav_favorit', 'Favorit'), icon: Heart },
     { to: '/kategori', label: t('nav_kategori', 'Kategori'), icon: LayoutGrid },
     { to: '/profil', label: t('nav_profil', 'Profil'), icon: UserRound },
